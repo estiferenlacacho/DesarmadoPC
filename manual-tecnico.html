@@ -1,0 +1,478 @@
+<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual técnico · DesarmadoPC</title><style>
+@page{size:A4;margin:16mm 14mm 18mm;@bottom-center{content:counter(page);font:10px Inter,sans-serif;color:#64748b}}
+:root{--ink:#16191f;--sub:#475569;--mat:#2fa9c9;--matD:#d9f1f8;--wood:#c9773b;--deep:#0f3442;--line:#d6dce3}
+*{box-sizing:border-box}
+body{margin:0 auto;max-width:900px;padding:0 16px 40px;font:11.5pt/1.5 Inter,"DejaVu Sans",sans-serif;color:var(--ink);background:#fff}
+h1,h2,h3{font-family:Inter,sans-serif;line-height:1.15}
+h2{font-size:19pt;color:var(--deep);margin:28px 0 10px;padding-bottom:6px;border-bottom:3px solid var(--mat);break-after:avoid}
+h3{font-size:13pt;color:var(--deep);margin:18px 0 8px;break-after:avoid}
+code{font:9.5pt "DejaVu Sans Mono",monospace;background:#f1f5f9;padding:1px 4px;border-radius:3px}
+pre{font:8.6pt/1.45 "DejaVu Sans Mono",monospace;margin:0;white-space:pre-wrap;word-break:break-word}
+pre.bloque{background:#0f172a;color:#e2e8f0;padding:12px 14px;border-radius:8px;margin:10px 0}
+table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:9.6pt}
+th{background:var(--deep);color:#fff;text-align:left;padding:7px 8px;font-weight:600}
+td{border-bottom:1px solid var(--line);padding:7px 8px;vertical-align:top}
+tr{break-inside:avoid}
+.ll td:first-child{background:#f8fafc;width:36%}.ll td:nth-child(2){width:25%}.ll td:nth-child(2) code{font-size:8.4pt;white-space:normal}
+.ll pre{font-size:8.2pt}
+.num{text-align:right;white-space:nowrap}
+.idx td{font-size:8.8pt;padding:4px 8px}
+.dia{width:100%;height:auto;margin:8px 0 14px;break-inside:avoid}
+.portada{min-height:255mm;display:flex;flex-direction:column;justify-content:flex-start;break-after:page;position:relative;padding-top:6mm}
+.portada .banda{height:10mm;background:linear-gradient(90deg,var(--deep),var(--mat));border-radius:6px;margin-bottom:12mm}
+.portada .tipo{font-size:14pt;font-weight:700;color:var(--wood);margin:0;text-transform:none}
+.portada h1{font-size:46pt;margin:4px 0 6px;color:var(--deep)}
+.portada .sub{font-size:14pt;color:var(--sub);margin:0 0 10mm}
+.portada .hero{width:100%;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.qrbox{display:flex;gap:16px;align-items:center;margin-top:10mm;padding:12px;border:2px solid var(--mat);border-radius:10px;font-size:10.5pt}
+.qrbox img{width:42mm;height:42mm;image-rendering:pixelated}
+.url{font:9.5pt "DejaVu Sans Mono",monospace;color:var(--deep)}
+.fecha{margin-top:auto;color:var(--sub);font-size:10pt}
+.indice{break-after:page}.indice ol{columns:2;font-size:12pt;line-height:1.9}
+ul li,ol li{margin-bottom:4px}
+@media screen{body{padding-top:20px}.portada{min-height:auto;padding-bottom:30px;border-bottom:1px solid var(--line)}table{display:block;overflow-x:auto}}
+</style></head><body>
+<section class="portada">
+<div class="banda"></div>
+<p class="tipo">Manual técnico</p>
+<h1>DesarmadoPC</h1>
+<p class="sub">Taller de computadoras en 3D · Processing 4 (Java, P3D / OpenGL)</p>
+<img class="hero" src="img/c11_rtx.jpg" alt="Escena con iluminación RTX">
+<div class="qrbox"><canvas class="qrvivo" width="300" height="300" style="width:42mm;height:42mm"></canvas><div><b>Descarga y versión web</b><br><span class="url"><span class="dirsitio"></span></span><br>Escanea el código para ir a la página de descarga del código fuente, los recursos y las instrucciones para generar el ejecutable.</div></div>
+<p class="fecha">Versión 2.0 · noviembre de 2026 · 5654 líneas de código Processing en 13 pestañas + 2 shaders GLSL</p>
+</section>
+<section class="indice"><h2>Contenido</h2><ol>
+<li>Descripción general</li><li>Herramientas empleadas</li><li>Arquitectura y estructura de archivos</li><li>Inicialización del contexto gráfico</li>
+<li>Ciclo de renderizado</li><li>Cámara</li><li>Manejo de eventos</li><li>Transformaciones</li><li>Iluminación: ambiental, difusa y especular</li>
+<li>Texturas</li><li>Shaders RTX (GLSL)</li><li>Sombras proyectadas con esténcil</li><li>Selección con el mouse</li><li>Audio y cámara web</li>
+<li>Rendimiento, estabilidad y pruebas</li><li>Índice de funciones importantes (@)</li><li>Compilación y exportación</li></ol></section>
+<h2>1. Descripción general</h2>
+<p>DesarmadoPC es un simulador educativo en el que el usuario desarma y arma computadoras en un taller 3D. Hay 8 equipos de diseño propio (4 laptops y 4 PCs de escritorio) con 11 a 13 piezas cada uno. Cada pieza tiene tornillos, cables y dependencias reales: por ejemplo, la tarjeta gráfica no sale hasta desconectar su cable de energía y quitar sus 2 tornillos. Al encender el equipo se simula el POST del BIOS, la carga del sistema y la temperatura del procesador. Si todo está bien, la pantalla muestra la cámara web del usuario.</p>
+<p>El proyecto integra en una misma ventana:</p>
+<ul><li><b>3D</b>: modelos construidos con primitivas y texturas generadas por código, cámara en órbita, luces ambiental, direccional, puntual y foco, shader de iluminación por píxel y sombras proyectadas.</li>
+<li><b>2D</b>: interfaz de modo inmediato dibujada encima del 3D, más una pantalla simulada que se dibuja en un PGraphics y se usa como textura del monitor.</li>
+<li><b>Animación continua</b>: cámara suavizada, piezas que viajan a la mesa, volteo de la laptop, apertura de la tapa, ventiladores, LEDs RGB, temperatura y fases de arranque.</li>
+<li><b>Interactividad completa</b>: selección 3D por rayo, 4 herramientas, atajos de teclado, panel de iluminación arrastrable y sonido.</li></ul>
+<h2>2. Herramientas empleadas</h2><table class="t"><thead><tr><th>Herramienta</th><th>Uso en el proyecto</th></tr></thead><tbody>
+<tr><td>Processing 4 (modo Java)</td><td>Lenguaje, editor y biblioteca gráfica principal. Renderizador <b>P3D</b>, que trabaja sobre OpenGL (JOGL).</td></tr>
+<tr><td>processing.core</td><td>Dibujo 2D/3D, transformaciones, luces, texturas (PImage, PGraphics), PVector, PMatrix3D.</td></tr>
+<tr><td>processing.opengl</td><td><b>PShader</b> (shaders GLSL propios) y <b>PGL</b> (acceso a OpenGL para el búfer de esténcil).</td></tr>
+<tr><td>GLSL (OpenGL Shading Language)</td><td>Shaders <code>rtx.vert</code> y <code>rtx.frag</code>. Están escritos en estilo GLSL 1.20; Processing los convierte a GLSL 1.50 en perfiles modernos.</td></tr>
+<tr><td>Video Library for Processing 4</td><td>Clase <b>Capture</b> para mostrar la cámara web dentro de la pantalla simulada.</td></tr>
+<tr><td>Java Sound (javax.sound.sampled)</td><td>Reproducción de los efectos de sonido WAV sin librerías externas.</td></tr>
+<tr><td>Java SE 17 (incluido con Processing)</td><td>Colecciones (ArrayList, HashMap), clases internas, manejo de excepciones.</td></tr>
+<tr><td>processing-java</td><td>Exportación del ejecutable desde la línea de comandos (scripts en 02_Ejecutable).</td></tr></tbody></table>
+<h2>3. Arquitectura y estructura de archivos</h2>
+<p>Processing une todas las pestañas <code>.pde</code> de la carpeta del sketch en una sola clase que hereda de PApplet. Por eso los <code>.pde</code> tienen que estar en la raíz del sketch, y los recursos van en <code>data/</code>. El código está dividido por responsabilidad: <b>lógica</b> (estado y reglas, sin dibujar), <b>vista</b> (cámara, orden de la escena e interfaz) y <b>render 3D</b> (modelos, texturas y luces).</p>
+<h3>3.1 Diagrama de arquitectura</h3><svg viewBox="0 0 760 470" class="dia" role="img" aria-label="Diagrama de arquitectura">
+<defs><marker id="fl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+<g font-family="Inter, sans-serif" font-size="12">
+<rect x="250" y="12" width="260" height="58" rx="10" fill="#c9773b"/><text x="380" y="36" fill="#fff" font-weight="700" text-anchor="middle" font-size="14">DesarmadoPC.pde</text><text x="380" y="55" fill="#fff" text-anchor="middle">setup() · draw() · eventos · sonido()</text>
+<rect x="20" y="20" width="170" height="44" rx="8" fill="#e2e8f0"/><text x="105" y="39" text-anchor="middle" font-weight="700">Entrada</text><text x="105" y="55" text-anchor="middle">mouse · teclado · cámara web</text>
+<rect x="570" y="20" width="170" height="44" rx="8" fill="#e2e8f0"/><text x="655" y="39" text-anchor="middle" font-weight="700">Salida</text><text x="655" y="55" text-anchor="middle">ventana 1280×720 · audio</text>
+<line x1="190" y1="42" x2="248" y2="42" stroke="#475569" stroke-width="1.6" marker-end="url(#fl)"/><line x1="510" y1="42" x2="568" y2="42" stroke="#475569" stroke-width="1.6" marker-end="url(#fl)"/>
+<text x="20" y="104" font-weight="700" fill="#0f3442">LÓGICA (estado y reglas)</text>
+<text x="740" y="104" font-weight="700" fill="#0f3442" text-anchor="end">VISTA (cámara, escena e interfaz)</text>
+<g fill="#d9f1f8" stroke="#2fa9c9"><rect x="20" y="112" width="160" height="50" rx="8"/><rect x="190" y="112" width="160" height="50" rx="8"/><rect x="20" y="172" width="160" height="50" rx="8"/><rect x="190" y="172" width="160" height="50" rx="8"/>
+<rect x="400" y="112" width="160" height="50" rx="8"/><rect x="570" y="112" width="170" height="50" rx="8"/><rect x="400" y="172" width="340" height="50" rx="8"/></g>
+<g text-anchor="middle"><text x="100" y="133" font-weight="700">Catalogo</text><text x="100" y="150">8 modelos → Equipo</text>
+<text x="270" y="133" font-weight="700">Equipo</text><text x="270" y="150">reglas · buscar() · usar()</text>
+<text x="100" y="193" font-weight="700">Pieza</text><text x="100" y="210">Tornillo · Conector</text>
+<text x="270" y="193" font-weight="700">Pantalla</text><text x="270" y="210">POST · SimOS · calor</text>
+<text x="480" y="133" font-weight="700">Camara3D</text><text x="480" y="150">aplicar() · rayo()</text>
+<text x="655" y="133" font-weight="700">Interfaz (2D)</text><text x="655" y="150">barra · paneles · avisos</text>
+<text x="570" y="193" font-weight="700">Escena</text><text x="570" y="210">mesa → sombras → equipo → piezas fuera → vidrio</text></g>
+<line x1="330" y1="70" x2="270" y2="110" stroke="#475569" stroke-width="1.4" marker-end="url(#fl)"/><line x1="430" y1="70" x2="480" y2="110" stroke="#475569" stroke-width="1.4" marker-end="url(#fl)"/>
+<text x="20" y="262" font-weight="700" fill="#0f3442">RENDER 3D (P3D / OpenGL)</text>
+<g fill="#fde9d9" stroke="#c9773b"><rect x="20" y="270" width="135" height="56" rx="8"/><rect x="165" y="270" width="135" height="56" rx="8"/><rect x="310" y="270" width="135" height="56" rx="8"/><rect x="455" y="270" width="135" height="56" rx="8"/><rect x="600" y="270" width="140" height="56" rx="8"/></g>
+<g text-anchor="middle"><text x="87" y="292" font-weight="700">Modelos</text><text x="87" y="310">primitivas y piezas</text>
+<text x="232" y="292" font-weight="700">Texturas</text><text x="232" y="310">PImage · PGraphics</text>
+<text x="377" y="292" font-weight="700">Iluminacion</text><text x="377" y="310">luces · panel</text>
+<text x="522" y="292" font-weight="700">Rtx</text><text x="522" y="310">shader · sombras</text>
+<text x="670" y="292" font-weight="700">Luces</text><text x="670" y="310">LEDs · brillo ADD</text></g>
+<line x1="570" y1="222" x2="380" y2="268" stroke="#475569" stroke-width="1.4" marker-end="url(#fl)"/><line x1="270" y1="222" x2="232" y2="268" stroke="#475569" stroke-width="1.4" marker-end="url(#fl)" stroke-dasharray="4 3"/>
+<text x="20" y="366" font-weight="700" fill="#0f3442">RECURSOS Y LIBRERÍAS</text>
+<g fill="#f1f5f9" stroke="#94a3b8"><rect x="20" y="374" width="230" height="78" rx="8"/><rect x="265" y="374" width="230" height="78" rx="8"/><rect x="510" y="374" width="230" height="78" rx="8"/></g>
+<g text-anchor="middle"><text x="135" y="396" font-weight="700">data/</text><text x="135" y="414">shaders/rtx.vert · rtx.frag</text><text x="135" y="431">sonidos/*.wav (9 efectos)</text>
+<text x="380" y="396" font-weight="700">processing.core · opengl</text><text x="380" y="414">P3D · PShader · PGL (esténcil)</text><text x="380" y="431">PVector · PMatrix3D</text>
+<text x="625" y="396" font-weight="700">Otras librerías</text><text x="625" y="414">processing.video (Capture)</text><text x="625" y="431">javax.sound.sampled (Clip)</text></g>
+<line x1="522" y1="326" x2="200" y2="372" stroke="#475569" stroke-width="1.4" marker-end="url(#fl)"/>
+</g></svg>
+<h3>3.2 Estructura de carpetas de la entrega</h3>
+<pre class="bloque">Entrega_DesarmadoPC/
+├── 01_Codigo_Fuente/
+│   └── DesarmadoPC/            ← sketch de Processing
+│       ├── DesarmadoPC.pde     ← pestaña principal (setup / draw)
+│       ├── Camara3D.pde  Catalogo.pde  Equipo.pde  Escena.pde
+│       ├── Iluminacion.pde  Interfaz.pde  Luces.pde  Modelos.pde
+│       ├── Pantalla.pde  Pieza.pde  Rtx.pde  Texturas.pde
+│       ├── LEEME.txt
+│       └── data/
+│           ├── shaders/   rtx.vert · rtx.frag
+│           └── sonidos/   alarma, atornillar, clic, desatornillar, error,
+│                          inicio, pitido, poner, quitar (.wav)
+├── 02_Ejecutable/          ← scripts de exportación e instrucciones
+├── 03_Documentacion/       ← Manual de usuario y Manual técnico (PDF)
+└── 04_QR/                  ← QR_DesarmadoPC.png</pre>
+<h3>3.3 Pestañas del sketch</h3><table class="t"><thead><tr><th>Archivo</th><th class="num">Líneas</th><th>Responsabilidad</th></tr></thead><tbody><tr><td><code>DesarmadoPC.pde</code></td><td class="num">465</td><td>Programa principal: setup(), draw(), menú, eventos de mouse y teclado, cámara web y sonido</td></tr><tr><td><code>Camara3D.pde</code></td><td class="num">86</td><td>Cámara en órbita con suavizado y rayo del mouse</td></tr><tr><td><code>Catalogo.pde</code></td><td class="num">755</td><td>Clase Modelo y los 8 modelos; construcción de cada equipo (piezas, tornillos, cables, dependencias)</td></tr><tr><td><code>Equipo.pde</code></td><td class="num">512</td><td>Reglas: qué se puede quitar o poner, herramientas, volteo de la laptop, selección por rayo</td></tr><tr><td><code>Pieza.pde</code></td><td class="num">191</td><td>Clases Tornillo, Conector y Pieza</td></tr><tr><td><code>Escena.pde</code></td><td class="num">170</td><td>Orden de dibujo de la escena 3D</td></tr><tr><td><code>Modelos.pde</code></td><td class="num">893</td><td>Primitivas (caja, cilindro, tubo, aspas) y modelos 3D de piezas, laptops, gabinetes y monitor</td></tr><tr><td><code>Texturas.pde</code></td><td class="num">811</td><td>Texturas generadas por código, cajas con textura, sombra de contacto y fondo</td></tr><tr><td><code>Iluminacion.pde</code></td><td class="num">247</td><td>Luces de la escena, ambientes y panel de iluminación</td></tr><tr><td><code>Rtx.pde</code></td><td class="num">293</td><td>Shader RTX, materiales, luz de LEDs/pantalla y sombras proyectadas con esténcil</td></tr><tr><td><code>Luces.pde</code></td><td class="num">320</td><td>LEDs RGB de las laptops y brillo aditivo</td></tr><tr><td><code>Pantalla.pde</code></td><td class="num">487</td><td>Pantalla simulada: diagnóstico, POST, carga, SimOS, temperatura y cámara web</td></tr><tr><td><code>Interfaz.pde</code></td><td class="num">424</td><td>Capa 2D: barra de herramientas, paneles, avisos, tooltip y ayuda</td></tr></tbody></table>
+<h3>3.4 Diagrama de flujo del programa</h3><svg viewBox="0 0 760 520" class="dia" role="img" aria-label="Diagrama de flujo del ciclo de dibujo">
+<defs><marker id="f2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker></defs>
+<g font-family="Inter, sans-serif" font-size="12" text-anchor="middle">
+<rect x="300" y="8" width="160" height="34" rx="17" fill="#c9773b"/><text x="380" y="30" fill="#fff" font-weight="700">setup() · una vez</text>
+<rect x="300" y="62" width="160" height="34" rx="17" fill="#0f3442"/><text x="380" y="84" fill="#fff" font-weight="700">draw() · 60 por segundo</text>
+<g fill="#fff" stroke="#2fa9c9" stroke-width="1.5"><rect x="280" y="114" width="200" height="34" rx="6"/></g><text x="380" y="135">background() + fondoEstudio()</text>
+<polygon points="380,166 470,196 380,226 290,196" fill="#d9f1f8" stroke="#2fa9c9" stroke-width="1.5"/><text x="380" y="200" font-weight="700">¿modo == MENU?</text>
+<rect x="530" y="178" width="210" height="36" rx="6" fill="#fff" stroke="#2fa9c9" stroke-width="1.5"/><text x="635" y="200">dibujarMenu() → return</text>
+<text x="500" y="190">sí</text><text x="392" y="244">no</text>
+<g fill="#fff" stroke="#2fa9c9" stroke-width="1.5">
+<rect x="250" y="252" width="260" height="30" rx="6"/><rect x="250" y="292" width="260" height="30" rx="6"/><rect x="250" y="332" width="260" height="30" rx="6"/><rect x="250" y="372" width="260" height="30" rx="6"/><rect x="250" y="412" width="260" height="30" rx="6"/><rect x="250" y="452" width="260" height="56" rx="6"/></g>
+<text x="380" y="272">1 · Animación: equipo, pantalla, LEDs</text>
+<text x="380" y="312">2 · cam.aplicar(): camera() + perspective()</text>
+<text x="380" y="352">3 · guardarVista() + luces() + shader RTX</text>
+<text x="380" y="392">4 · rayo del mouse → buscar() (hover)</text>
+<text x="380" y="432">5 · dibujarEscena(): 3D con sombras</text>
+<text x="380" y="474">6 · Capa 2D: hint(DISABLE_DEPTH_TEST),</text><text x="380" y="492">camera(), sinLuces(), ui.dibujar()</text>
+<g stroke="#475569" stroke-width="1.5" fill="none"><path d="M380 42 V60" marker-end="url(#f2)"/><path d="M380 96 V112" marker-end="url(#f2)"/><path d="M380 148 V164" marker-end="url(#f2)"/><path d="M470 196 H528" marker-end="url(#f2)"/><path d="M380 226 V250" marker-end="url(#f2)"/>
+<path d="M380 282 V290" marker-end="url(#f2)"/><path d="M380 322 V330" marker-end="url(#f2)"/><path d="M380 362 V370" marker-end="url(#f2)"/><path d="M380 402 V410" marker-end="url(#f2)"/><path d="M380 442 V450" marker-end="url(#f2)"/>
+<path d="M250 480 H225 V79 H298" marker-end="url(#f2)"/><path d="M740 196 H752 V79 H462" marker-end="url(#f2)" stroke-dasharray="4 3"/></g>
+<text x="218" y="370" transform="rotate(-90 218 370)" fill="#475569">siguiente cuadro</text>
+<rect x="10" y="110" width="190" height="140" rx="8" fill="#fde9d9" stroke="#c9773b"/><text x="105" y="132" font-weight="700">Eventos (asíncronos)</text><text x="105" y="152">mousePressed()</text><text x="105" y="168">mouseDragged()</text><text x="105" y="184">mouseReleased()</text><text x="105" y="200">mouseWheel() · keyPressed()</text><text x="105" y="216">captureEvent()</text><text x="105" y="238" fill="#475569">cambian el estado</text>
+</g></svg>
+<h3>3.5 Sistema de coordenadas</h3>
+<p>Las medidas del modelo están en milímetros: <b>x</b> hacia la derecha, <b>h</b> hacia arriba y <b>z</b> hacia el usuario. Como en Processing el eje Y crece hacia abajo, al dibujar siempre se usa <code>-h</code> (por ejemplo <code>translate(p.x, -p.h, p.z)</code>). La mesa está en h = 0.</p>
+<h2>4. Inicialización del contexto gráfico</h2><p>Todo ocurre en <code>setup()</code>, que Processing ejecuta una vez antes del primer cuadro:</p>
+<pre class="bloque">void setup() {
+  size(1280, 720, P3D);
+  smooth(8);
+  fuente = createFont(&quot;SansSerif&quot;, 14);
+  fuenteMono = createFont(&quot;Monospaced&quot;, 15);
+  textFont(fuente);
+  textureWrap(REPEAT);
+  crearTexturas();
+  crearCatalogo();
+  cam = new Camara3D();
+  ui = new Interfaz();
+  menuLaptops = new Equipo[LAPTOPS.length];
+  menuTorres = new Equipo[ESCRITORIOS.length];
+  for (int i = 0; i &lt; LAPTOPS.length; i++) {
+    menuLaptops[i] = crearLaptop(LAPTOPS[i]);
+    menuLaptops[i].enUso = true;
+    menuLaptops[i].volteo = 1;
+    menuLaptops[i].demoLuces = true;
+  }
+  for (int i = 0; i &lt; ESCRITORIOS.length; i++)
+    menuTorres[i] = crearEscritorio(ESCRITORIOS[i]);
+  menuLaptop = menuLaptops[0];
+  menuTorre = menuTorres[0];
+  equipo = menuLaptop;
+  monitor = new Pantalla();
+  prepararRTX();
+}</pre>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>size(1280, 720, P3D);</pre></td><td><code>size(width, height, renderer)</code><br>width, height: <i>int</i> en píxeles; renderer: P2D, P3D, JAVA2D…</td><td>Crea la ventana de 1280×720 y el <b>contexto gráfico OpenGL</b> en modo 3D (P3D). Debe ser la primera línea de setup(); sin P3D no existirían cámara, luces, texturas 3D ni shaders.</td></tr>
+<tr><td><pre>smooth(8);</pre></td><td><code>smooth(level)</code><br>level: <i>int</i> 2, 4 u 8 (muestras de antialiasing)</td><td>Activa el antialiasing de 8 muestras: los bordes de gabinetes, tornillos y cables se ven sin “escalones”.</td></tr>
+<tr><td><pre>fuente = createFont(&quot;SansSerif&quot;, 14);
+fuenteMono = createFont(&quot;Monospaced&quot;, 15);</pre></td><td><code>createFont(name, size)</code><br>name: <i>String</i>; size: <i>float</i>. Devuelve <i>PFont</i></td><td>Crea las dos fuentes del programa: SansSerif para la interfaz y Monospaced para el BIOS y la consola de la pantalla simulada.</td></tr>
+<tr><td><pre>textFont(fuente);</pre></td><td><code>textFont(which)</code><br>which: <i>PFont</i></td><td>Fuente activa para todos los text() de la interfaz 2D.</td></tr>
+<tr><td><pre>textureWrap(REPEAT);</pre></td><td><code>textureWrap(wrap)</code><br>wrap: CLAMP o REPEAT</td><td>Permite coordenadas UV mayores que 1: la madera de la mesa y el grano de los plásticos se repiten sin estirarse.</td></tr>
+<tr><td><pre>crearTexturas();
+crearCatalogo();</pre></td><td>Funciones propias (Texturas.pde, Catalogo.pde)</td><td>Genera por código todas las texturas (madera, tapete, metales, PCB, etiquetas) y define los 8 modelos. Se hace una sola vez para no recalcular en cada cuadro.</td></tr>
+<tr><td><pre>cam = new Camara3D();
+ui = new Interfaz();
+monitor = new Pantalla();</pre></td><td>Constructores de clases propias</td><td>Crea la cámara en órbita, la capa 2D y la pantalla simulada (que contiene un PGraphics de 640×400 donde se dibuja el POST y el sistema).</td></tr>
+<tr><td><pre>menuLaptops[i] = crearLaptop(LAPTOPS[i]);
+menuTorres[i] = crearEscritorio(ESCRITORIOS[i]);</pre></td><td>Funciones propias (Catalogo.pde) que devuelven <i>Equipo</i></td><td>Construye de antemano los 8 equipos que se muestran girando en el menú.</td></tr>
+<tr><td><pre>prepararRTX();</pre></td><td>Función propia (Rtx.pde)</td><td>Carga los shaders RTX y los prueba; si la tarjeta de video no los acepta, desactiva RTX y el programa sigue con la iluminación clásica.</td></tr>
+</tbody></table>
+<h3>4.1 Prueba segura del shader</h3><p><code>prepararRTX()</code> carga el shader y dibuja un cuadro de 1×1 con él. Después llama <code>flush()</code> para que OpenGL lo compile en ese momento. Si algo falla, la excepción se atrapa y el programa usa la iluminación clásica: nunca se cierra por la tarjeta de video.</p>
+<pre class="bloque">try {
+  rtxShader = loadShader(&quot;shaders/rtx.frag&quot;, &quot;shaders/rtx.vert&quot;);
+  ...
+  shader(rtxShader);
+  beginShape(QUADS); texture(texGrano); normal(0, 0, 1); vertex(0, 0, 0, 0, 0); ... endShape();
+  flush();
+  resetShader();
+  rtxDisponible = true;
+}
+catch (Exception ex) {
+  rtxDisponible = false;
+  rtx = false;
+}</pre>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>flush();</pre></td><td><code>flush()</code></td><td>Obliga a Processing a enviar ya la geometría pendiente a OpenGL, de modo que la compilación del shader ocurre dentro del try y no en medio de draw().</td></tr>
+</tbody></table>
+<h2>5. Ciclo de renderizado</h2><p><code>draw()</code> se ejecuta unas 60 veces por segundo. Su orden garantiza que el 3D quede debajo y la interfaz 2D encima:</p>
+<pre class="bloque">void draw() {
+  background(18, 19, 24);
+  fondoEstudio();
+  if (equipo.encendido)
+    giroAspas += 0.45;
+  if (modo == MENU) {
+    dibujarMenu();
+    clic = false;
+    return;
+  }
+  equipo.actualizar();
+  monitor.actualizar();
+  actualizarLuces(equipo);
+  actualizarColorPantalla();
+  cam.aplicar();
+  guardarVista();
+  luces();
+  boolean sobreUI = ui.sobrePanel(mouseX, mouseY);
+  hover = !arrastrando &amp;&amp; !sobreUI &amp;&amp; !mostrarAyuda ? equipo.buscar(cam.rayo(mouseX, mouseY)) : null;
+  dibujarEscena(equipo, hover, true);
+  dibujarIndicadorLuz();
+
+  hint(DISABLE_DEPTH_TEST);
+  camera();
+  perspective();
+  sinLuces();
+  ui.dibujar();
+  hint(ENABLE_DEPTH_TEST);
+  clic = false;
+}</pre>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>background(18, 19, 24);</pre></td><td><code>background(v1, v2, v3)</code>, valores <i>float</i> 0..255</td><td>Borra el cuadro anterior (color y profundidad). Es lo primero de cada cuadro.</td></tr>
+<tr><td><pre>fondoEstudio();</pre></td><td>Función propia: <code>hint(DISABLE_DEPTH_TEST)</code>, <code>camera()</code>, <code>rect()</code></td><td>Pinta un degradado 2D de estudio fotográfico detrás de todo, sin afectar el búfer de profundidad.</td></tr>
+<tr><td><pre>if (modo == MENU) {
+  dibujarMenu();
+  clic = false;
+  return;
+}</pre></td><td>Estructura de control Java</td><td>Máquina de estados de dos modos: MENU (vitrina con cámara automática) y TALLER (escena interactiva).</td></tr>
+<tr><td><pre>equipo.actualizar();
+monitor.actualizar();
+actualizarLuces(equipo);</pre></td><td>Métodos propios</td><td><b>Animación continua</b>: avanza las piezas que viajan a la mesa, el volteo de la laptop, la temperatura del CPU, las fases de arranque y el brillo de los LEDs.</td></tr>
+<tr><td><pre>cam.aplicar();</pre></td><td>Método propio que llama <code>camera()</code> y <code>perspective()</code></td><td>Coloca la cámara 3D del cuadro (ver la tabla de Camara3D.aplicar).</td></tr>
+<tr><td><pre>guardarVista();</pre></td><td><code>getMatrix()</code> → <i>PMatrix3D</i></td><td>Guarda la matriz de la cámara. Se usa para volver a poner las luces en el mismo lugar después de dibujar algo sin luces (pantallas, LEDs).</td></tr>
+<tr><td><pre>luces();</pre></td><td>Función propia (Iluminacion.pde)</td><td>Coloca la luz ambiental, las direccionales, la lámpara, la linterna, la luz de LEDs/pantalla y activa el shader RTX.</td></tr>
+<tr><td><pre>hover = ... equipo.buscar(cam.rayo(mouseX, mouseY)) ...;</pre></td><td><code>mouseX</code>, <code>mouseY</code>: <i>int</i> (variables del sistema)</td><td>Selección 3D: convierte la posición del mouse en un rayo y busca qué tornillo, cable o pieza toca.</td></tr>
+<tr><td><pre>dibujarEscena(equipo, hover, true);</pre></td><td>Función propia (Escena.pde)</td><td>Mesa → sombras → equipo → piezas en la mesa → panel de vidrio (lo transparente al final).</td></tr>
+<tr><td><pre>hint(DISABLE_DEPTH_TEST);
+camera();
+perspective();
+sinLuces();
+ui.dibujar();
+hint(ENABLE_DEPTH_TEST);</pre></td><td><code>hint(which)</code>; <code>camera()</code> y <code>perspective()</code> sin parámetros restauran la vista 2D por defecto</td><td><b>Integración 2D + 3D</b>: tras la escena se apaga la prueba de profundidad, se vuelve a la cámara por defecto (1 unidad = 1 píxel) y se dibuja la interfaz encima, sin luces ni shader.</td></tr>
+<tr><td><pre>clic = false;</pre></td><td>Asignación</td><td>El clic se consume en el mismo cuadro; los botones son “inmediatos” (boton() devuelve true solo ese cuadro).</td></tr>
+</tbody></table>
+<h3>5.1 Orden de la escena</h3><p><code>dibujarEscena()</code> dibuja primero lo opaco y al final lo transparente, para que la mezcla alfa sea correcta: mesa y tapete → sombras de contacto → sombras proyectadas (RTX) → equipo (cuerpo, piezas, tornillos, conectores, cables) → piezas que viajan o están en la mesa → panel de vidrio.</p>
+<h3>5.2 Pantalla simulada (2D dentro del 3D)</h3><p>La pantalla del equipo es un <code>PGraphics</code> de 640×400. Cada cuadro, <code>dibujarImagen()</code> pinta en él la fase actual entre <code>pg.beginDraw()</code> y <code>pg.endDraw()</code>: BIOS, carga, SimOS con la cámara, error de arranque o apagado de emergencia. Luego <code>pantallaTexturizada()</code> la pega como textura sobre la geometría del monitor <b>sin luces ni shader</b>, de modo que siempre se ve nítida.</p>
+<h2>6. Cámara</h2>
+<pre class="bloque">void aplicar() {
+    yaw = lerp(yaw, yawM, 0.15);
+    pitch = lerp(pitch, pitchM, 0.15);
+    dist = lerp(dist, distM, 0.15);
+    tx = lerp(tx, txM, 0.12);
+    th = lerp(th, thM, 0.12);
+    tz = lerp(tz, tzM, 0.12);
+    ex = tx + sin(yaw) * cos(pitch) * dist;
+    ez = tz + cos(yaw) * cos(pitch) * dist;
+    eh = max(th + sin(pitch) * dist, 15);
+    camera(ex, -eh, ez, tx, -th, tz, 0, 1, 0);
+    perspective(fov, width / (float) height, 5, 20000);
+}</pre>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>yaw = lerp(yaw, yawM, 0.15);
+dist = lerp(dist, distM, 0.15);</pre></td><td><code>lerp(start, stop, amt)</code> → <i>float</i></td><td>Suavizado: cada cuadro la cámara recorre el 15 % de lo que le falta para llegar a su meta. Da movimientos continuos y sin saltos.</td></tr>
+<tr><td><pre>ex = tx + sin(yaw) * cos(pitch) * dist;
+ez = tz + cos(yaw) * cos(pitch) * dist;
+eh = max(th + sin(pitch) * dist, 15);</pre></td><td><code>sin(angle)</code>, <code>cos(angle)</code>: angle en radianes; <code>max(a, b)</code></td><td>Coordenadas esféricas → cartesianas: posición del ojo en una órbita alrededor del centro. max() impide que la cámara baje de la mesa.</td></tr>
+<tr><td><pre>camera(ex, -eh, ez, tx, -th, tz, 0, 1, 0);</pre></td><td><code>camera(eyeX, eyeY, eyeZ, centerX, centerY, centerZ, upX, upY, upZ)</code>, todos <i>float</i></td><td>Coloca el ojo y el punto al que mira. La altura va negativa porque en Processing el eje Y crece hacia abajo; (0, 1, 0) es el vector “arriba” de Processing.</td></tr>
+<tr><td><pre>perspective(fov, width / (float) height, 5, 20000);</pre></td><td><code>perspective(fovy, aspect, zNear, zFar)</code></td><td>Proyección en perspectiva con el campo de visión de la cámara y planos de recorte de 5 a 20 000 mm.</td></tr>
+<tr><td><pre>PVector f = PVector.sub(cc, e);
+f.normalize();
+PVector r = f.cross(u);</pre></td><td><code>PVector.sub(v1, v2)</code>, <code>normalize()</code>, <code>cross(v)</code>, <code>dot(v)</code></td><td>rayo(): arma la base de la cámara (frente, arriba, derecha) para convertir el píxel del mouse en una dirección 3D.</td></tr>
+<tr><td><pre>float nx = (mx - width / 2.0) / (height / 2.0) * t;</pre></td><td><code>tan(angle)</code>; <code>width</code>, <code>height</code></td><td>Normaliza el píxel a −1..1 y lo escala con tan(fov/2): es la inversa de la proyección en perspectiva.</td></tr>
+</tbody></table>
+<h2>7. Manejo de eventos</h2><p>Processing llama a estas funciones cuando ocurre un evento, entre un cuadro y otro. Los eventos solo cambian variables de estado; el dibujo siempre ocurre en <code>draw()</code>.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>void mousePressed() {
+  pressX = mouseX;
+  pressY = mouseY;
+  botonPresionado = mouseButton;
+  mousePresionadoLuz();
+}</pre></td><td><code>void mousePressed()</code> (evento); <code>mouseButton</code>: LEFT, RIGHT o CENTER</td><td>Guarda dónde empezó la pulsación para distinguir clic de arrastre, y toma el control del panel de luz si se presionó sobre él.</td></tr>
+<tr><td><pre>if (!arrastrando &amp;&amp; dist(mouseX, mouseY, pressX, pressY) &gt; 4 ...)
+  arrastrando = true;</pre></td><td><code>void mouseDragged()</code>; <code>dist(x1, y1, x2, y2)</code></td><td>Un movimiento de más de 4 px convierte la pulsación en arrastre.</td></tr>
+<tr><td><pre>float dx = mouseX - pmouseX, dy = mouseY - pmouseY;
+if (botonPresionado == CENTER || shift)
+  cam.desplazar(dx, dy);
+else
+  cam.girar(dx, dy);</pre></td><td><code>pmouseX</code>, <code>pmouseY</code>: posición del cuadro anterior</td><td>El desplazamiento del mouse entre cuadros gira la órbita, o la desplaza con Shift o el botón central.</td></tr>
+<tr><td><pre>void mouseReleased() {
+  if (!arrastrando) {
+    ... clic = true;
+    else if (botonPresionado == LEFT)
+      equipo.usar(hover);</pre></td><td><code>void mouseReleased()</code></td><td>Si no hubo arrastre fue un clic: sobre la interfaz activa un botón; sobre la escena usa la herramienta actual en lo que está bajo el mouse.</td></tr>
+<tr><td><pre>void mouseWheel(MouseEvent ev) {
+  cam.zoom(ev.getCount());
+}</pre></td><td><code>void mouseWheel(MouseEvent event)</code>; <code>event.getCount()</code> → <i>int</i> (+ hacia el usuario)</td><td>La rueda acerca o aleja la cámara un 10 % por paso.</td></tr>
+<tr><td><pre>if (key == ESC) { key = 0; ... }</pre></td><td><code>key</code>: <i>char</i>; ESC: constante</td><td>Evita que ESC cierre el programa (Processing lo hace por defecto); en su lugar cierra la ayuda.</td></tr>
+<tr><td><pre>if (key == CODED) {
+  if (keyCode == SHIFT) shift = true;</pre></td><td><code>key == CODED</code> indica tecla especial; <code>keyCode</code>: SHIFT, UP, DOWN…</td><td>Registra Shift para el desplazamiento de la cámara.</td></tr>
+<tr><td><pre>char k = Character.toLowerCase(key);
+if (k &gt;= &#x27;1&#x27; &amp;&amp; k &lt;= &#x27;4&#x27;)
+  herramienta = k - &#x27;1&#x27;;
+else if (k == &#x27;x&#x27;)
+  alternarRTX();</pre></td><td><code>void keyPressed()</code>; Java <code>Character.toLowerCase(char)</code></td><td>Atajos sin importar mayúsculas: 1–4 herramientas; U, V, E, F, R, H, M, L, I, T, O, K, X (RTX) y N (sonido).</td></tr>
+<tr><td><pre>void captureEvent(Capture c) {
+  c.read();
+  camaraLista = true;
+}</pre></td><td>Librería Video: <code>void captureEvent(Capture c)</code>, <code>read()</code></td><td>Evento asíncrono de la cámara web: lee el cuadro nuevo, que se muestra en el escritorio de SimOS.</td></tr>
+<tr><td><pre>return sobre &amp;&amp; clic;</pre></td><td>Método propio <code>boton(t, x, y, w, h, activo, acento)</code></td><td>Interfaz de modo inmediato: el botón se dibuja y responde en la misma llamada; si el mouse está encima y hubo clic devuelve true.</td></tr>
+</tbody></table>
+<h2>8. Transformaciones</h2><p>Todas las transformaciones se aplican a la matriz actual (modelo-vista) y afectan a lo que se dibuja después. El patrón del proyecto es siempre <code>pushMatrix()</code> → transformaciones → dibujo → <code>popMatrix()</code>.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>pushMatrix();
+...
+popMatrix();</pre></td><td><code>pushMatrix()</code> / <code>popMatrix()</code></td><td>Guarda y recupera el sistema de coordenadas. Cada pieza se dibuja con sus propias transformaciones sin afectar a las demás. Las pruebas automáticas verifican que la pila quede en 0 al final de cada cuadro.</td></tr>
+<tr><td><pre>translate(p.x, -p.h, p.z);</pre></td><td><code>translate(x, y, z)</code></td><td>Lleva el origen al centro de la pieza (en mm). La altura h es positiva hacia arriba en el modelo, por eso se niega para el eje Y de Processing.</td></tr>
+<tr><td><pre>translate(0, -13 - elevacion(), 0);
+rotateZ(-anguloVolteo());
+translate(0, 13, 0);</pre></td><td><code>rotateZ(angle)</code>, angle en radianes</td><td>Equipo.transformar(): voltea la laptop sobre su eje. Mover el pivote, rotar y regresar hace que gire alrededor del borde y no del origen; elevacion() la levanta mientras gira.</td></tr>
+<tr><td><pre>translate(0, -H, -hd);
+rotateX(e.aperturaTapa());</pre></td><td><code>rotateX(angle)</code></td><td>Abre la tapa de la laptop alrededor de la bisagra (borde trasero de la base).</td></tr>
+<tr><td><pre>rotateY(gira ? giroAspas : 0.3);
+...
+rotateY(TWO_PI * i / n);</pre></td><td><code>rotateY(angle)</code>; <code>TWO_PI</code> = 2π</td><td>aspas(): el ventilador entero gira con giroAspas (aumenta 0.45 rad por cuadro con el equipo encendido) y cada aspa se reparte a TWO_PI/n.</td></tr>
+<tr><td><pre>rotateY(atan2(dx, dz));
+rotateX(-asin(constrain(dy / l, -1, 1)));</pre></td><td><code>atan2(y, x)</code>, <code>asin(value)</code>, <code>constrain(amt, low, high)</code></td><td>tubo(): orienta un cilindro de un punto a otro (mangueras y cables): primero el rumbo y luego la inclinación.</td></tr>
+<tr><td><pre>float t = p.anim, k = t * t * (3 - 2 * t);
+rotateX(HALF_PI * giro);</pre></td><td><code>rotateX(angle)</code>; <code>HALF_PI</code> = π/2</td><td>orientarEnMundo(): curva suave (smoothstep) para que la pieza se acueste 90° mientras viaja a la mesa.</td></tr>
+<tr><td><pre>pg.translate(ix + iw, iy);
+pg.scale(-1, 1);
+pg.image(camara, 0, 0, iw, ih, ...);</pre></td><td><code>scale(x, y)</code>; <code>image(img, a, b, c, d, u1, v1, u2, v2)</code></td><td>Transformación 2D dentro de la pantalla simulada: refleja la imagen de la cámara como un espejo.</td></tr>
+<tr><td><pre>applyMatrix(1, -L[0] / L[1], 0, y0 * L[0] / L[1],
+            0, 0, 0, y0,
+            0, -L[2] / L[1], 1, y0 * L[2] / L[1],
+            0, 0, 0, 1);</pre></td><td><code>applyMatrix(n00, n01, n02, n03, n10, …, n33)</code>: 16 <i>float</i>, multiplica la matriz actual</td><td>Matriz de <b>proyección plana</b>: aplasta todo el equipo sobre el plano de la mesa (y = y0) en la dirección de la luz principal L. Así se obtiene la sombra real, que se mueve al girar la luz.</td></tr>
+<tr><td><pre>pushMatrix();
+setMatrix(matVista);
+luces();
+popMatrix();</pre></td><td><code>setMatrix(source)</code>, source: <i>PMatrix3D</i></td><td>restaurarLuces(): las luces se definen en coordenadas de la cámara; volver a la matriz guardada asegura que no se muevan aunque estemos dentro de otras transformaciones.</td></tr>
+</tbody></table>
+<h2>9. Iluminación: ambiental, difusa y especular</h2><p><code>luces()</code> se llama en cada cuadro después de colocar la cámara. Usa hasta 8 luces, el máximo de Processing: ambiental, sol, relleno, contorno, lámpara de trabajo, luz de aro, linterna y luz de LEDs o pantalla. El panel de iluminación (tecla I) cambia en vivo la dirección del sol (domo), la intensidad, la luz ambiental, la temperatura de color y 5 ambientes predefinidos.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>ambientLight(86 * a * amb, 88 * a * amb, 96 * a * amb);</pre></td><td><code>ambientLight(v1, v2, v3)</code></td><td><b>Componente ambiental</b>: ilumina todo por igual para que las zonas sin luz directa no queden negras. Con RTX se reduce porque el shader añade el rebote de luz.</td></tr>
+<tr><td><pre>float[] d = dirLuz();
+directionalLight(red(ct) * 0.8 * k, ..., d[0], d[1], d[2]);</pre></td><td><code>directionalLight(v1, v2, v3, nx, ny, nz)</code></td><td><b>Componente difusa</b> principal (el “sol” del domo): su dirección viene de luzGiro y luzAltura, que el usuario mueve con el mouse; su color, de la temperatura (cálida–fría).</td></tr>
+<tr><td><pre>directionalLight(58 * a, 68 * a, 90 * a, -d[0] * 0.8, 0.35, -d[2] * 0.8);
+directionalLight(46 * k, 48 * k, 58 * k, 0.1, 0.35, -1);</pre></td><td><code>directionalLight(...)</code></td><td>Luz de relleno azulada desde el lado opuesto y luz de contorno trasera: el esquema clásico de tres luces de fotografía de producto.</td></tr>
+<tr><td><pre>lightFalloff(1, 0.0011, 0);
+pointLight(r, g, b, x, y, z);
+lightFalloff(1, 0, 0);</pre></td><td><code>lightFalloff(constant, linear, quadratic)</code>; <code>pointLight(v1, v2, v3, x, y, z)</code></td><td>Lámpara de trabajo: luz puntual que se debilita con la distancia (1 / (c + l·d + q·d²)) y alumbra el interior del gabinete.</td></tr>
+<tr><td><pre>spotLight(400, 390, 360, cam.ex, -cam.eh, cam.ez, r[3], -r[4], r[5], PI / 10, 14);</pre></td><td><code>spotLight(v1, v2, v3, x, y, z, nx, ny, nz, angle, concentration)</code></td><td>Linterna: foco con cono de π/10 que sale de la cámara en la dirección del rayo del mouse.</td></tr>
+<tr><td><pre>pointLight(red(c) * k, ..., 0, -m.H * 0.3, zl);</pre></td><td><code>pointLight(...)</code></td><td>lucesDeEquipo(): los LEDs RGB o la pantalla encendida iluminan lo que tienen cerca (el color de la pantalla es el promedio de su imagen). Se cuenta cada luz para no pasar del máximo de 8 de Processing.</td></tr>
+<tr><td><pre>specular(190);
+shininess(48);</pre></td><td><code>specular(gray)</code>; <code>shininess(shine)</code></td><td><b>Componente especular</b>: material() asigna brillo según la textura: metal cepillado y cobre muy brillantes (48), madera y aluminio medio (26), tapete casi mate (6), plástico 14.</td></tr>
+<tr><td><pre>noLights();
+resetShader();</pre></td><td><code>noLights()</code>; <code>resetShader()</code></td><td>sinLuces(): antes de dibujar pantallas, LEDs, sombras e interfaz se quitan luces y shader. Por eso <b>las pantallas nunca se oscurecen ni se deslumbran</b>: muestran su imagen tal cual.</td></tr>
+</tbody></table>
+<h2>10. Texturas</h2><p>No hay imágenes externas: las 20 texturas se generan por código al iniciar. Así el proyecto no depende de archivos de imagen y cada modelo tiene su propio teclado, tapa y etiquetas.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>PImage img = createImage(w, h, ARGB);</pre></td><td><code>createImage(w, h, format)</code><br>w, h: <i>int</i>; format: RGB, ARGB o ALPHA. Devuelve <i>PImage</i></td><td>Reserva una imagen vacía con canal alfa para pintar una textura píxel por píxel (generar()).</td></tr>
+<tr><td><pre>img.loadPixels();
+img.pixels[y * w + x] = pixelTextura(tipo, ...);
+img.updatePixels();</pre></td><td><code>loadPixels()</code>, <code>pixels[]</code> (<i>int[]</i> en orden de filas), <code>updatePixels()</code></td><td>Acceso directo al arreglo de píxeles: cada material (madera, aluminio, cobre, malla…) se calcula con ruido de Perlin y se guarda en la posición y·ancho+x.</td></tr>
+<tr><td><pre>float n = ruidoC(u, v, 24) * 0.6 + ruidoC(u, v, 80) * 0.4;</pre></td><td><code>noise(x, y)</code> → <i>float</i> 0..1 (ruido de Perlin), usado dentro de ruidoC()</td><td>Mezcla dos escalas de ruido para que el grano tenga detalle fino y manchas grandes; ruidoC() lo hace repetible sin costuras.</td></tr>
+<tr><td><pre>PGraphics g = createGraphics(w, h, P2D);
+g.beginDraw(); ... g.endDraw();</pre></td><td><code>createGraphics(w, h, renderer)</code> → <i>PGraphics</i>; <code>beginDraw()</code> / <code>endDraw()</code></td><td>Lienzo fuera de pantalla para dibujar con primitivas 2D texturas complejas: tapete con cuadrícula y reglas, teclado, placas de circuito y etiquetas.</td></tr>
+<tr><td><pre>textureMode(NORMAL);</pre></td><td><code>textureMode(mode)</code><br>mode: IMAGE (píxeles) o NORMAL (0..1)</td><td>Las coordenadas UV se dan de 0 a 1, así una misma caja sirve con texturas de cualquier tamaño.</td></tr>
+<tr><td><pre>beginShape(QUADS);
+texture(tex);
+normal(0, -1, 0);
+vertex(-hw, -ha, -hd, u0, v0);</pre></td><td><code>beginShape(kind)</code> kind: QUADS, QUAD_STRIP, TRIANGLE_FAN…; <code>texture(image)</code>; <code>normal(nx, ny, nz)</code>; <code>vertex(x, y, z, u, v)</code></td><td>Base de cajaT() y caraCaja(): cada cara de una caja es un cuadrilátero con su textura, su normal (necesaria para que la luz difusa y especular sepa hacia dónde mira) y sus UV.</td></tr>
+<tr><td><pre>tint(lados);
+fill(lados);</pre></td><td><code>tint(rgb)</code> y <code>fill(rgb)</code>, rgb: <i>color</i></td><td>tint() tiñe la textura con el color del modelo. fill() se pone igual porque en P3D la luz ambiental toma el color del relleno; así el ambiente no “lava” el color.</td></tr>
+<tr><td><pre>PImage img = monitor.imagen();
+texture(img);</pre></td><td><code>texture(image)</code> con un <i>PGraphics</i> (subclase de PImage)</td><td>La imagen viva de la pantalla simulada (POST, SimOS, cámara) se pega como textura sobre el monitor o la tapa de la laptop en cada cuadro.</td></tr>
+<tr><td><pre>blendMode(ADD);
+hint(DISABLE_DEPTH_MASK);
+texture(texBrillo);</pre></td><td><code>blendMode(mode)</code> mode: BLEND, ADD…; <code>hint(DISABLE_DEPTH_MASK)</code></td><td>empezarBrillo(): los LEDs y halos se suman a lo que hay detrás (mezcla aditiva) sin escribir profundidad, así brillan sin tapar otras piezas.</td></tr>
+</tbody></table>
+<h2>11. Shaders RTX (GLSL)</h2><p>El modo RTX (tecla X) cambia la iluminación por vértice de Processing por una <b>iluminación por píxel</b>. Esta añade brillos especulares Blinn-Phong, rebote de luz hemisférico (cielo y mesa), reflejo Fresnel en los bordes y mapeo de tonos ACES. Solo se aplica a la geometría con textura y luces. <b>Las pantallas, los LEDs, las sombras y la interfaz se dibujan después de <code>resetShader()</code> y <code>noLights()</code></b>, así que el efecto nunca afecta su lectura. Es un sombreado por rasterización que imita el aspecto de un render con trazado de rayos; no traza rayos de verdad.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>#define PROCESSING_TEXLIGHT_SHADER</pre></td><td>Directiva de Processing para shaders: tipos COLOR, LIGHT, TEXTURE, TEXLIGHT</td><td>Indica a Processing que este shader es para geometría <b>con textura y con luces</b>; la geometría sin luces sigue usando el shader por defecto.</td></tr>
+<tr><td><pre>rtxShader = loadShader(&quot;shaders/rtx.frag&quot;, &quot;shaders/rtx.vert&quot;);</pre></td><td><code>loadShader(fragFilename, vertFilename)</code> → <i>PShader</i></td><td>Carga los dos programas GLSL desde la carpeta data/shaders.</td></tr>
+<tr><td><pre>shader(rtxShader);</pre></td><td><code>shader(shader)</code></td><td>Reemplaza el sombreado por vértice de Processing por el sombreado por píxel del proyecto.</td></tr>
+<tr><td><pre>rtxShader.set(&quot;arriba&quot;, u.x - o.x, u.y - o.y, u.z - o.z);</pre></td><td><code>PShader.set(name, x, y, z)</code> → uniform vec3</td><td>Pasa al shader la dirección “arriba” del mundo vista desde la cámara (se calcula transformando (0,−1,0) y el origen con matVista.mult()).</td></tr>
+<tr><td><pre>rtxShader.set(&quot;fuerzaEspecular&quot;, 0.9);</pre></td><td><code>PShader.set(name, x)</code> → uniform float</td><td>Ajustes del entorno: fuerza del rebote, del especular, del Fresnel y exposición.</td></tr>
+<tr><td><pre>gl_Position = transformMatrix * position;
+vPos = vec3(modelviewMatrix * position);
+vNormal = normalize(normalMatrix * normal);</pre></td><td>GLSL: uniforms de Processing <code>transformMatrix</code> (mat4), <code>modelviewMatrix</code> (mat4), <code>normalMatrix</code> (mat3)</td><td>rtx.vert: proyecta el vértice a pantalla y manda al fragmento la posición y la normal en espacio de cámara, donde están las luces.</td></tr>
+<tr><td><pre>vec4 tex = texture2D(texture, vTexCoord.st);</pre></td><td>GLSL: <code>texture2D(sampler2D, vec2)</code> → vec4</td><td>Lee el color de la textura (albedo) en ese píxel.</td></tr>
+<tr><td><pre>for (int i = 0; i &lt; 8; i++) {
+  if (i &gt;= lightCount) break;
+  bool direccional = lightPosition[i].w &lt; 1.0;</pre></td><td>Uniforms de Processing: <code>lightCount</code>, <code>lightPosition[8]</code>, <code>lightNormal[8]</code>, <code>lightDiffuse[8]</code>, <code>lightFalloff[8]</code>, <code>lightSpot[8]</code></td><td>Recorre las mismas luces que se pusieron con ambientLight/directionalLight/pointLight/spotLight. w = 0 indica luz direccional.</td></tr>
+<tr><td><pre>float nl = max(dot(N, L), 0.0);
+difusa += lightDiffuse[i] * f * nl;</pre></td><td>GLSL: <code>dot(x, y)</code>, <code>max(x, y)</code></td><td>Difusa de Lambert por píxel: la cara recibe más luz cuanto más de frente mira a la luz.</td></tr>
+<tr><td><pre>vec3 H = normalize(L + V);
+float s = pow(max(dot(N, H), 0.0), brillo);</pre></td><td>GLSL: <code>normalize(x)</code>, <code>pow(x, y)</code></td><td>Especular de Blinn-Phong con el vector medio H: el reflejo brillante se mueve con la cámara y con la luz, como en un metal real.</td></tr>
+<tr><td><pre>float hemi = 0.5 + 0.5 * dot(N, normalize(arriba));
+vec3 rebote = mix(colorSuelo, colorCielo, hemi) * fuerzaRebote;</pre></td><td>GLSL: <code>mix(x, y, a)</code></td><td>Iluminación global aproximada: lo que mira hacia arriba recibe luz del “cielo” y lo que mira hacia abajo el tono cálido que rebota de la mesa de madera.</td></tr>
+<tr><td><pre>float fres = pow(1.0 - max(dot(N, V), 0.0), 5.0);</pre></td><td>Aproximación de Schlick (Fresnel)</td><td>Los bordes que se ven de lado reflejan más el entorno: da el contorno brillante típico de los renders “RTX”.</td></tr>
+<tr><td><pre>gl_FragColor = vec4(aces(luz * exposicion), tex.a * vColor.a);</pre></td><td>GLSL: <code>gl_FragColor</code> (vec4); <code>clamp(x, a, b)</code> dentro de aces()</td><td>Mapeo de tonos ACES: comprime las luces altas sin “quemarlas” y conserva el detalle en las sombras.</td></tr>
+</tbody></table>
+<h3>11.1 Combinación final en rtx.frag</h3>
+<pre class="bloque">vec3 luz = albedo * (ambiente * vAmbient.rgb / max(vColor.rgb, vec3(0.004)) + difusa + rebote)
+         + especular * vSpecular.rgb * fuerzaEspecular
+         + reflejo
+         + vEmissive.rgb * tex.rgb;
+gl_FragColor = vec4(aces(luz * exposicion), tex.a * vColor.a);</pre>
+<p>La luz ambiental se multiplica por el color ambiente del material (<code>fill</code>) y se divide entre el tinte, porque el albedo ya lo incluye. La difusa y el rebote dependen del color de la superficie. El especular depende del material (<code>specular()</code>). El Fresnel crece con el valor especular, así que los metales reflejan más que el plástico.</p>
+<h2>12. Sombras proyectadas con esténcil</h2><p>Con RTX activo, <code>dibujarSombrasRTX()</code> vuelve a dibujar el equipo aplastado sobre la mesa en la dirección de la luz principal. La sombra cambia de forma y de lugar en tiempo real al mover el sol del domo.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>PGL pgl = beginPGL();</pre></td><td><code>beginPGL()</code> → <i>PGL</i> (acceso a OpenGL); <code>endPGL()</code></td><td>Da acceso directo a OpenGL. Antes de hacerlo Processing dibuja lo pendiente (flush).</td></tr>
+<tr><td><pre>pgl.clearStencil(0);
+pgl.clear(PGL.STENCIL_BUFFER_BIT);</pre></td><td><code>clearStencil(s)</code>, <code>clear(mask)</code> (equivalen a glClearStencil y glClear)</td><td>Limpia el búfer de esténcil antes de la pasada de sombra.</td></tr>
+<tr><td><pre>pgl.enable(PGL.STENCIL_TEST);
+pgl.stencilFunc(PGL.EQUAL, 0, 0xFF);
+pgl.stencilOp(PGL.KEEP, PGL.KEEP, PGL.INCR);</pre></td><td><code>stencilFunc(func, ref, mask)</code>; <code>stencilOp(sfail, dpfail, dppass)</code></td><td>Solo se dibuja donde el esténcil vale 0 y al dibujar se incrementa: cada píxel de sombra se oscurece <b>una sola vez</b> aunque varias piezas se proyecten encima (sin manchas más oscuras).</td></tr>
+<tr><td><pre>modoSombra = true;
+... dibujarEquipo(e, null);
+modoSombra = false;</pre></td><td>Variable de estado + sobrescritura de <code>fill()</code>, <code>tint()</code>, <code>stroke()</code></td><td>Se reutiliza el mismo código de dibujo: mientras modoSombra está activo los métodos de color sobrescritos pintan negro translúcido, y las pantallas y LEDs se saltan.</td></tr>
+<tr><td><pre>alfaSombra = 160 * constrain(luzFuerza / 1.2, 0, 1) * ...;</pre></td><td><code>constrain(amt, low, high)</code></td><td>La sombra es más oscura con más intensidad de luz, más suave con más luz ambiental y desaparece cuando la luz está casi horizontal.</td></tr>
+</tbody></table>
+<h2>13. Selección con el mouse</h2><p>Cada cuadro, <code>cam.rayo(mouseX, mouseY)</code> calcula un rayo y <code>equipo.buscar()</code> lo prueba contra las cajas de tornillos, conectores, piezas y lugares de la mesa. Lo que toca primero queda resaltado (hover) y es lo que recibe el clic.</p>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>float a = (mn[i] - o) / d, b = (mx[i] - o) / d;
+t0 = max(t0, min(a, b));
+t1 = min(t1, max(a, b));</pre></td><td><code>min(a, b)</code>, <code>max(a, b)</code></td><td>rayoCaja(): método de “slabs”. En cada eje calcula dónde el rayo entra y sale de la caja; si los intervalos se cruzan hay intersección y t0 es la distancia.</td></tr>
+<tr><td><pre>return t1 &gt;= t0 &amp;&amp; t1 &gt; 0 ? max(t0, 0) : -1;</pre></td><td>Operador ternario</td><td>Devuelve la distancia de impacto o −1. buscar() se queda con lo más cercano entre tornillos, conectores, piezas y lugares de la mesa.</td></tr>
+<tr><td><pre>float[] rayoALocal(float[] r)</pre></td><td>Método propio</td><td>Lleva el rayo al sistema de la laptop volteada (aplica la rotación inversa) para probar contra cajas sin girar.</td></tr>
+</tbody></table>
+<h2>14. Audio y cámara web</h2>
+<table class="ll"><thead><tr><th class="c1">Instrucción / código</th><th class="c2">Sintaxis (API oficial)</th><th class="c3">Función / propósito en el proyecto</th></tr></thead><tbody>
+<tr><td><pre>File f = new File(dataPath(&quot;sonidos/&quot; + nombre + &quot;.wav&quot;));</pre></td><td><code>dataPath(filename)</code> → <i>String</i> (ruta absoluta dentro de data/)</td><td>Ubica el efecto de sonido dentro de la carpeta data del sketch (funciona igual en la aplicación exportada).</td></tr>
+<tr><td><pre>AudioInputStream entrada = AudioSystem.getAudioInputStream(f);
+final Clip clip = AudioSystem.getClip();
+clip.open(entrada);
+clip.start();</pre></td><td>Java Sound: <code>AudioSystem.getAudioInputStream(File)</code>, <code>AudioSystem.getClip()</code>, <code>Clip.open(AudioInputStream)</code>, <code>Clip.start()</code></td><td>Reproduce el WAV sin bloquear el dibujo: atornillar, desatornillar, clic, poner, quitar, error, pitido del POST, alarma de temperatura y sonido de inicio.</td></tr>
+<tr><td><pre>clip.addLineListener(new LineListener() {
+  public void update(LineEvent ev) {
+    if (ev.getType() == LineEvent.Type.STOP) clip.close();</pre></td><td><code>LineListener.update(LineEvent)</code></td><td>Cierra el clip al terminar para liberar el dispositivo de audio.</td></tr>
+<tr><td><pre>catch (Exception ex) {
+  sonidoActivo = false;</pre></td><td>try / catch de Java</td><td>Si el equipo no tiene salida de audio, el programa sigue sin sonido en lugar de detenerse.</td></tr>
+<tr><td><pre>camara = new Capture(this, 640, 480, lista[0]);
+camara.start();</pre></td><td>Librería Video: <code>Capture(parent, width, height, name)</code>, <code>Capture.list()</code>, <code>start()</code></td><td>Abre la cámara web cuando el equipo simulado termina de arrancar; su imagen se muestra en la pantalla de SimOS.</td></tr>
+</tbody></table>
+<h2>15. Rendimiento, estabilidad y pruebas</h2><ul>
+<li><b>Texturas y modelos precalculados</b> en setup(). En draw() no se crean imágenes; el color de la pantalla para su luz se promedia solo cada 20 cuadros y con 16 muestras.</li>
+<li><b>Máximo de 8 luces</b>: <code>luces()</code> cuenta las que coloca y <code>lucesDeEquipo()</code> no pasa del límite.</li>
+<li><b>Respaldo automático</b>: sin shaders compatibles se usa la iluminación clásica. Sin cámara web o sin audio, el programa avisa y sigue funcionando.</li>
+<li><b>Pila de matrices equilibrada</b>: toda transformación va entre pushMatrix/popMatrix. La pasada de sombra restaura su estado (modoSombra, depth mask y esténcil).</li>
+<li><b>Pruebas automáticas</b> con un renderizador de pruebas: desarmado y armado completo de los 8 modelos, arranque hasta el sistema, fallas (sin RAM, sin disco, sobrecalentamiento) y modo RTX. Este último verifica la carga de los shaders, que las pantallas no reciban luces ni shader, el límite de 8 luces y la sombra con esténcil: 228 + 15 comprobaciones, todas correctas. Los shaders se compilaron y enlazaron con un controlador OpenGL (Mesa) en sus dos formas, GLSL 1.20 y 1.50.</li></ul>
+<h2>16. Índice de funciones importantes (@)</h2><p>En el código, cada función tiene un comentario guía. Las importantes empiezan con <code>// @</code>: basta buscar <code>@</code> en el editor para encontrarlas.</p>
+<table class="t idx"><thead><tr><th>Función</th><th>Archivo</th><th class="num">Línea</th><th>Descripción</th></tr></thead><tbody><tr><td><code>class Camara3D</code></td><td><code>Camara3D.pde</code></td><td class="num">5</td><td>Cámara en órbita con movimiento suave (los valores se acercan a su meta en cada cuadro)</td></tr><tr><td><code>aplicar()</code></td><td><code>Camara3D.pde</code></td><td class="num">56</td><td>Suaviza hacia la meta y coloca la cámara con camera() y perspective()</td></tr><tr><td><code>rayo(mx, my)</code></td><td><code>Camara3D.pde</code></td><td class="num">71</td><td>Rayo del mouse en el mundo {x, h, z, dx, dh, dz} para saber qué hay bajo el cursor</td></tr><tr><td><code>class Modelo</code></td><td><code>Catalogo.pde</code></td><td class="num">6</td><td>Datos de un modelo: medidas, estilo, colores y qué piezas trae</td></tr><tr><td><code>crearCatalogo()</code></td><td><code>Catalogo.pde</code></td><td class="num">38</td><td>Define los 8 modelos (4 laptops y 4 PCs, diseños propios)</td></tr><tr><td><code>crearLaptop(m)</code></td><td><code>Catalogo.pde</code></td><td class="num">244</td><td>Construye una laptop: piezas, tornillos, cables, dependencias y orden de desarmado</td></tr><tr><td><code>crearEscritorio(m)</code></td><td><code>Catalogo.pde</code></td><td class="num">425</td><td>Construye una PC: posiciones calculadas desde el gabinete y la placa madre</td></tr><tr><td><code>setup()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">57</td><td>Inicializa el contexto gráfico P3D (1280x720), fuentes, texturas, catálogo, cámara, interfaz, equipos del menú, pantalla y shaders RTX</td></tr><tr><td><code>draw()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">86</td><td>Ciclo de renderizado (60 cuadros/s): fondo, animación, cámara, luces, escena 3D y al final la interfaz 2D</td></tr><tr><td><code>dibujarMenu()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">119</td><td>Menú inicial: cámara que gira alrededor de una laptop y una PC, y tarjetas de los 8 modelos (clic para entrar)</td></tr><tr><td><code>empezar(m)</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">209</td><td>Crea el equipo del modelo m, reinicia la pantalla, la herramienta y la cámara, y entra al taller</td></tr><tr><td><code>mousePressed()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">338</td><td>Evento al presionar: guarda dónde empezó y qué botón, y toma los controles del panel de luz</td></tr><tr><td><code>mouseDragged()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">347</td><td>Arrastrar: gira la cámara, la desplaza (Shift o botón central) o mueve controles del panel de luz</td></tr><tr><td><code>mouseReleased()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">362</td><td>Si no hubo arrastre es un clic: va a la interfaz 2D o a la herramienta sobre la escena 3D</td></tr><tr><td><code>mouseWheel(ev)</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">374</td><td>Rueda del mouse: acerca o aleja la cámara</td></tr><tr><td><code>keyPressed()</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">380</td><td>Atajos de teclado: herramientas 1-4, U, V, E, F, R, H, M, L, I, T, O, K, X (RTX) y N (sonido)</td></tr><tr><td><code>sonido(nombre)</code></td><td><code>DesarmadoPC.pde</code></td><td class="num">441</td><td>Reproduce data/sonidos/&lt;nombre&gt;.wav con Java Sound (sin librerías extra)</td></tr><tr><td><code>class Equipo</code></td><td><code>Equipo.pde</code></td><td class="num">33</td><td>Estado de un equipo y reglas para quitar y poner piezas</td></tr><tr><td><code>razonNoQuitar(p)</code></td><td><code>Equipo.pde</code></td><td class="num">118</td><td>Por qué no se puede quitar la pieza (null = sí se puede)</td></tr><tr><td><code>razonNoPoner(p)</code></td><td><code>Equipo.pde</code></td><td class="num">138</td><td>Por qué no se puede colocar la pieza (null = sí se puede)</td></tr><tr><td><code>quitar(p)</code></td><td><code>Equipo.pde</code></td><td class="num">155</td><td>Manda la pieza a la mesa con animación (separar el disipador estropea la pasta)</td></tr><tr><td><code>poner(p)</code></td><td><code>Equipo.pde</code></td><td class="num">174</td><td>Regresa la pieza de la mesa a su lugar con animación</td></tr><tr><td><code>actualizar()</code></td><td><code>Equipo.pde</code></td><td class="num">213</td><td>Animación de piezas, del volteo y de la tapa en cada cuadro</td></tr><tr><td><code>transformar()</code></td><td><code>Equipo.pde</code></td><td class="num">249</td><td>Aplica translate() y rotateZ() del volteo de la laptop</td></tr><tr><td><code>buscar(rm)</code></td><td><code>Equipo.pde</code></td><td class="num">279</td><td>Lo más cercano que toca el rayo: tornillos, conectores, piezas o mesa</td></tr><tr><td><code>usar(o)</code></td><td><code>Equipo.pde</code></td><td class="num">330</td><td>Acción del clic según la herramienta y lo que está bajo el mouse</td></tr><tr><td><code>siguientePaso(armando)</code></td><td><code>Equipo.pde</code></td><td class="num">469</td><td>Siguiente pieza según el orden de desarmado o armado</td></tr><tr><td><code>dibujarEscena(e, o, conMesa)</code></td><td><code>Escena.pde</code></td><td class="num">5</td><td>Dibuja todo en orden: mesa, sombras, equipo, piezas fuera y panel</td></tr><tr><td><code>dibujarEquipo(e, o)</code></td><td><code>Escena.pde</code></td><td class="num">27</td><td>Cuerpo, piezas instaladas, tornillos, conectores y cables (también para la sombra)</td></tr><tr><td><code>aplicarPreset(i)</code></td><td><code>Iluminacion.pde</code></td><td class="num">27</td><td>Ambientes: Estudio, Taller, Atardecer, Noche y Exposición</td></tr><tr><td><code>dirLuz()</code></td><td><code>Iluminacion.pde</code></td><td class="num">52</td><td>Dirección de la luz principal según el giro y la altura del domo</td></tr><tr><td><code>luces()</code></td><td><code>Iluminacion.pde</code></td><td class="num">59</td><td>Luces de cada cuadro: ambiental, 3 direccionales, lámpara, aro, linterna, LEDs/pantalla y shader RTX</td></tr><tr><td><code>dibujarPanelLuz()</code></td><td><code>Iluminacion.pde</code></td><td class="num">140</td><td>Panel 2D: ambientes, domo, intensidad, ambiente, temperatura y botones de luces y RTX</td></tr><tr><td><code>avisar(t, tipo)</code></td><td><code>Interfaz.pde</code></td><td class="num">19</td><td>Muestra un aviso (INFO, BIEN, AVISO o ERROR_)</td></tr><tr><td><code>class Interfaz</code></td><td><code>Interfaz.pde</code></td><td class="num">42</td><td>Capa 2D dibujada encima de la escena 3D</td></tr><tr><td><code>dibujar()</code></td><td><code>Interfaz.pde</code></td><td class="num">83</td><td>Dibuja toda la interfaz: barra, paneles, paso, avisos, tooltip, ayuda y panel de luz</td></tr><tr><td><code>boton(t, x, y, w, h, activo, acento)</code></td><td><code>Interfaz.pde</code></td><td class="num">99</td><td>Botón inmediato: devuelve true si se le hizo clic en este cuadro</td></tr><tr><td><code>guardarVista()</code></td><td><code>Luces.pde</code></td><td class="num">12</td><td>Guarda la matriz de la cámara para restaurar las luces después de noLights()</td></tr><tr><td><code>restaurarLuces()</code></td><td><code>Luces.pde</code></td><td class="num">17</td><td>Vuelve a poner las luces con la matriz de la cámara (no hace nada en la pasada de sombra)</td></tr><tr><td><code>sinLuces()</code></td><td><code>Luces.pde</code></td><td class="num">27</td><td>noLights() y quita el shader RTX: para pantallas, LEDs, sombras e interfaz</td></tr><tr><td><code>colorLed(e, i, n, anillo)</code></td><td><code>Luces.pde</code></td><td class="num">48</td><td>Color de cada LED según el efecto (con barrido blanco al encender)</td></tr><tr><td><code>c(x, h, z, w, a, d)</code></td><td><code>Modelos.pde</code></td><td class="num">32</td><td>Caja centrada con grano teñido del color de relleno (primitiva base)</td></tr><tr><td><code>cilindro(x, h, z, r, largo, eje, lados, col)</code></td><td><code>Modelos.pde</code></td><td class="num">43</td><td>Cilindro con normales y textura (recibe brillo RTX)</td></tr><tr><td><code>dibujarPieza(p, e)</code></td><td><code>Modelos.pde</code></td><td class="num">138</td><td>Dibuja una pieza en su lugar según su tipo, su variante y el modelo</td></tr><tr><td><code>dibujarMesa(laptop)</code></td><td><code>Modelos.pde</code></td><td class="num">523</td><td>Mesa de madera y tapete antiestático</td></tr><tr><td><code>dibujarCuerpoLaptop(e)</code></td><td><code>Modelos.pde</code></td><td class="num">556</td><td>Base con teclado y tapa con pantalla, según el estilo del modelo</td></tr><tr><td><code>pantallaTexturizada(x0, z0, x1, z1, h, enTapa)</code></td><td><code>Modelos.pde</code></td><td class="num">664</td><td>Imagen de la pantalla sin luces ni shader: siempre se ve nítida</td></tr><tr><td><code>dibujarGabinete(e)</code></td><td><code>Modelos.pde</code></td><td class="num">690</td><td>Gabinete sin el panel lateral; el frente cambia con el modelo</td></tr><tr><td><code>dibujarMonitor(e)</code></td><td><code>Modelos.pde</code></td><td class="num">801</td><td>Monitor de la PC con la imagen de la pantalla simulada</td></tr><tr><td><code>class Pantalla</code></td><td><code>Pantalla.pde</code></td><td class="num">15</td><td>Pantalla simulada: diagnóstico, POST, carga, sistema, temperatura y cámara</td></tr><tr><td><code>hayImagen()</code></td><td><code>Pantalla.pde</code></td><td class="num">38</td><td>true si la pantalla muestra algo (sirve también para la luz que emite)</td></tr><tr><td><code>encender()</code></td><td><code>Pantalla.pde</code></td><td class="num">54</td><td>Revisa energía, arranque y video y decide en qué fase empieza</td></tr><tr><td><code>actualizar()</code></td><td><code>Pantalla.pde</code></td><td class="num">258</td><td>Cada cuadro: temperatura, ventilador y avance de fases (POST, carga, sistema, calor)</td></tr><tr><td><code>dibujarImagen()</code></td><td><code>Pantalla.pde</code></td><td class="num">332</td><td>Pinta la imagen de la fase actual en el PGraphics de la pantalla</td></tr><tr><td><code>class Pieza</code></td><td><code>Pieza.pde</code></td><td class="num">98</td><td>Componente del equipo: tamaño, tornillos, dependencias, herramienta y animación</td></tr><tr><td><code>prepararRTX()</code></td><td><code>Rtx.pde</code></td><td class="num">12</td><td>Carga data/shaders y los prueba; si la tarjeta no los acepta sigue con la iluminación clásica</td></tr><tr><td><code>activarRTX()</code></td><td><code>Rtx.pde</code></td><td class="num">54</td><td>Pone el shader y le pasa los uniforms del entorno (lo llama luces())</td></tr><tr><td><code>material(tex)</code></td><td><code>Rtx.pde</code></td><td class="num">77</td><td>Brillo especular según la superficie: metal, madera, tapete o plástico</td></tr><tr><td><code>lucesDeEquipo(usadas)</code></td><td><code>Rtx.pde</code></td><td class="num">96</td><td>Los LEDs RGB o la pantalla encendida iluminan lo que tienen cerca (máx. 8 luces)</td></tr><tr><td><code>dibujarSombrasRTX(e, conMesa)</code></td><td><code>Rtx.pde</code></td><td class="num">146</td><td>Proyecta el equipo sobre la mesa desde la luz principal</td></tr><tr><td><code>empezarStencil()</code></td><td><code>Rtx.pde</code></td><td class="num">183</td><td>Esténcil: cada píxel de sombra se oscurece una sola vez</td></tr><tr><td><code>crearTexturas()</code></td><td><code>Texturas.pde</code></td><td class="num">12</td><td>Genera todas las texturas al iniciar (madera, tapete, metales, PCB, etiquetas...)</td></tr><tr><td><code>generar(w, h, tipo)</code></td><td><code>Texturas.pde</code></td><td class="num">47</td><td>Textura por píxel con ruido de Perlin</td></tr><tr><td><code>cajaT(x, h, z, w, a, d, lados, tex, cara)</code></td><td><code>Texturas.pde</code></td><td class="num">678</td><td>Caja con textura en una cara (1 arriba, -1 abajo, 2 frente, -2 atrás, 3 der., -3 izq.)</td></tr><tr><td><code>sombra(x, z, w, d, fuerza)</code></td><td><code>Texturas.pde</code></td><td class="num">773</td><td>Sombra suave de contacto sobre el tapete</td></tr></tbody></table>
+<h2>17. Compilación y exportación</h2><ol>
+<li>Instalar Processing 4 y la librería “Video Library for Processing 4” (Sketch › Importar biblioteca › Administrar bibliotecas).</li>
+<li>Abrir <code>01_Codigo_Fuente/DesarmadoPC/DesarmadoPC.pde</code> y ejecutar (▶) para compilar y probar.</li>
+<li>Exportar: Archivo › Exportar aplicación, elegir el sistema y marcar “Incluir Java”. También se puede usar <code>02_Ejecutable/exportar_windows.bat</code> o <code>exportar_linux_mac.sh</code>, que llaman a <code>processing-java --sketch=… --output=… --variant=… --export</code>.</li>
+<li>Distribuir la carpeta generada completa (el ejecutable junto con <code>data/</code>, <code>lib/</code> y <code>java/</code>).</li></ol>
+<script src="js/qr.js"></script><script>{const d=location.href.split('#')[0].replace(/[^/]*$/,'');
+for(const e of document.querySelectorAll('.dirsitio'))e.textContent=d;
+const q=new QRCode(-1,QRErrorCorrectLevel.M);q.addData(d);q.make();const n=q.getModuleCount();
+for(const cv of document.querySelectorAll('.qrvivo')){const g=cv.getContext('2d'),s=Math.floor(cv.width/(n+8)),o=Math.floor((cv.width-s*(n+8))/2);g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);g.fillStyle='#000';
+for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))g.fillRect(o+(c+4)*s,o+(r+4)*s,s,s);}}</script></body></html>

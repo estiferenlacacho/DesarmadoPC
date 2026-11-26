@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DesarmadoPC · Taller 3D</title>
+<style>
+/* VOICE: taller práctico, directo, como la hoja que viene pegada en la caja de un kit
+   IDEA: tapete antiestático de un banco de trabajo, con su cuadrícula y regla
+   PICTURE: la escena RTX del programa grande, sobre el tapete
+   COLOUR and TYPE: fondo de estudio oscuro, campo azul del tapete, acento madera; Archivo + Inter
+   LAYOUT: banda principal con descarga y captura, pasos, controles, galería y contenido del paquete */
+:root{color-scheme:light dark;--bg:light-dark(#f3f5f7,#121419);--ink:light-dark(#16191f,#e9edf2);--sub:light-dark(#4b5563,#a9b3c1);
+--mat:#2fa9c9;--matD:light-dark(#d9f1f8,#0f3442);--wood:#c9773b;--card:light-dark(#ffffff,#1b1f27);--line:light-dark(#d6dce3,#2a313c)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Archivo,Inter,sans-serif;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(34px,5vw,52px);font-weight:800}h2{font-size:clamp(26px,3vw,34px);font-weight:800;margin-bottom:18px}h3{font-size:18px;font-weight:800}
+.band{padding:clamp(28px,4vw,64px) max(5vw,16px)}.wrap{max-width:1240px;margin:0 auto}
+.hero{background:var(--matD);background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:32px 32px}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(20px,4vw,48px);align-items:center}
+.lead{font-size:17px;color:var(--sub);max-width:52ch;margin:16px 0 24px}
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border-radius:10px;border:0;font:600 16px Inter,sans-serif;cursor:pointer;text-decoration:none}
+.prim{background:var(--wood);color:#fff}.prim:hover{filter:brightness(1.08)}.prim:focus-visible,.sec:focus-visible{outline:3px solid var(--mat);outline-offset:3px}
+.sec{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.acc{display:flex;flex-wrap:wrap;gap:10px}
+#estado{min-height:24px;margin-top:12px;font-size:14px;color:var(--sub)}
+.shot{border-radius:14px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.35);border:1px solid var(--line);background:#000}
+.shot img{display:block;width:100%;height:auto}
+.cap{font-size:13px;color:var(--sub);margin-top:8px}
+.pasos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;counter-reset:p}
+.paso{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px}
+.paso h3::before{counter-increment:p;content:counter(p);display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--mat);color:#fff;margin-right:10px;font-size:15px}
+.paso p{margin:10px 0 0;color:var(--sub)}
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:14px;color:var(--sub)}
+kbd{font:600 13px Inter,sans-serif;background:var(--matD);border:1px solid var(--line);border-radius:6px;padding:2px 8px;white-space:nowrap}
+.dos{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(20px,3vw,40px)}
+.gal{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:10px}
+.gal figure{flex:0 0 min(560px,86%);margin:0;scroll-snap-align:start}
+.gal img{width:100%;height:auto;border-radius:10px;border:1px solid var(--line);display:block}
+.gal figcaption{font-size:14px;color:var(--sub);margin-top:6px}
+.nav{display:flex;gap:8px;margin-bottom:12px}.nav button{min-width:44px;min-height:44px}
+pre{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;font-size:13px;line-height:1.5;overflow-x:auto;margin:0}
+.qr{display:flex;gap:18px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.qr canvas{width:160px;height:160px;background:#fff;border-radius:6px;flex:none}
+a{color:inherit}
+footer{font-size:14px;color:var(--sub)}
+@media(max-width:820px){.grid,.dos{grid-template-columns:minmax(0,1fr)}.pasos{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 14px;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:no-preference){.shot{transition:transform .4s}.shot:hover{transform:translateY(-4px)}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<section class="band hero"><div class="wrap grid">
+  <div>
+    <h1>DesarmadoPC: taller de computadoras en 3D</h1>
+    <p class="lead">Desarma y arma 4 laptops y 4 PCs pieza por pieza con destornillador, púa y pasta térmica. Al encenderlas pasan el POST y muestran tu cámara en su pantalla. Hecho en Processing 4 con iluminación RTX por píxel y sombras reales.</p>
+    <div class="acc">
+      <a class="btn prim" href="descargas/Entrega_DesarmadoPC.zip" download>Descargar proyecto (.zip)</a>
+      <a class="btn sec" href="manual-usuario.html">Manual de usuario</a>
+      <a class="btn sec" href="manual-tecnico.html">Manual técnico</a>
+    </div>
+    <div id="estado">El .zip trae el código fuente, los shaders, los sonidos, los scripts para el ejecutable, los manuales y el QR.</div>
+  </div>
+  <div>
+    <div class="shot"><img src="img/c11_rtx.jpg" alt="Laptop encendida sobre el tapete con iluminación RTX y sombra proyectada" width="1280" height="720"></div>
+    <div class="cap">Modo RTX: brillos especulares, rebote de luz y sombra proyectada; la pantalla se dibuja sin luces para que siempre se lea.</div>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>Cómo ejecutarlo</h2>
+  <div class="pasos">
+    <div class="paso"><h3>Descarga</h3><p>Baja el .zip con el botón de arriba y descomprímelo. El sketch está en <code>01_Codigo_Fuente/DesarmadoPC</code>: deja juntas las pestañas .pde y la carpeta <code>data/</code>.</p></div>
+    <div class="paso"><h3>Instala Processing 4</h3><p>Desde processing.org. En <em>Sketch › Importar biblioteca › Administrar bibliotecas</em> instala «Video Library for Processing 4».</p></div>
+    <div class="paso"><h3>Ejecuta o exporta</h3><p>Abre <code>DesarmadoPC.pde</code> y pulsa ▶. Para un .exe usa <em>Archivo › Exportar aplicación</em> o los scripts de <code>02_Ejecutable/</code>.</p></div>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap dos">
+  <div>
+    <h2>Controles</h2>
+    <table class="stack"><thead><tr><th>Tecla o acción</th><th>Qué hace</th></tr></thead><tbody id="controles"></tbody></table>
+  </div>
+  <div>
+    <h2>Requisitos</h2>
+    <table class="stack"><thead><tr><th>Elemento</th><th>Mínimo</th></tr></thead><tbody id="requisitos"></tbody></table>
+    <h2 style="margin-top:32px">Contenido del paquete</h2>
+    <pre id="arbol">DesarmadoPC_Entrega/
+  LEEME.txt
+  01_Codigo_Fuente/DesarmadoPC/
+    DesarmadoPC.pde  Camara3D.pde  Catalogo.pde
+    Equipo.pde  Escena.pde  Iluminacion.pde
+    Interfaz.pde  Luces.pde  Modelos.pde  Pantalla.pde
+    Pieza.pde  Rtx.pde  Texturas.pde  LEEME.txt
+    data/shaders/  rtx.vert  rtx.frag
+    data/sonidos/  9 efectos .wav
+  02_Ejecutable/
+    exportar_windows.bat  exportar_linux_mac.sh
+    LEEME_EJECUTABLE.txt</pre>
+  </div>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>Galería</h2>
+  <div class="nav"><button class="btn sec" id="ant" type="button" aria-label="Anterior">‹</button><button class="btn sec" id="sig" type="button" aria-label="Siguiente">›</button></div>
+  <div class="gal" id="gal" tabindex="0"></div>
+  <p class="cap">Imágenes de la escena generadas a partir del código del proyecto.</p>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <h2>Documentación</h2>
+  <table class="stack"><thead><tr><th>Documento</th><th>Ver en línea</th><th>PDF</th><th>Word</th></tr></thead><tbody>
+    <tr><td>Manual de usuario</td><td><a href="manual-usuario.html">Abrir</a></td><td><a href="descargas/Manual_de_Usuario_DesarmadoPC.pdf" download>Descargar</a></td><td><a href="descargas/Manual_de_Usuario_DesarmadoPC.docx" download>Descargar</a></td></tr>
+    <tr><td>Manual técnico</td><td><a href="manual-tecnico.html">Abrir</a></td><td><a href="descargas/Manual_Tecnico_DesarmadoPC.pdf" download>Descargar</a></td><td><a href="descargas/Manual_Tecnico_DesarmadoPC.docx" download>Descargar</a></td></tr>
+  </tbody></table>
+</div></section>
+
+<section class="band" style="padding-top:0"><div class="wrap">
+  <div class="qr"><canvas id="qr" width="240" height="240" aria-label="Código QR de esta página"></canvas><div><h3>Código QR de esta página</h3>
+  <p class="cap" style="margin:6px 0 10px">Se genera con la dirección con la que abriste la página: <span id="dir"></span></p>
+  <p class="cap" id="avisoQR" style="margin:0 0 10px;color:var(--wood)"></p>
+  <a class="btn sec" id="bajarQR" download="QR_DesarmadoPC.png" href="#">Descargar QR (.png)</a></div></div>
+  <footer style="margin-top:24px">DesarmadoPC · Processing 4 (Java, P3D/OpenGL) · Los 8 equipos son diseños propios.</footer>
+</div></section>
+
+<script src="js/qr.js"></script>
+<script>
+{
+const controles=[["Clic izquierdo","Usar la herramienta en lo que está bajo el mouse"],["Arrastrar","Girar la cámara"],["Shift + arrastrar","Desplazar la cámara"],["Rueda","Acercar o alejar"],["1 · 2 · 3 · 4","Mano, destornillador, púa, pasta térmica"],["U","Pulsera antiestática"],["V","Voltear o abrir la laptop"],["E","Encender o apagar"],["F · R","Enfocar el siguiente paso · cámara inicial"],["I · T · O · K","Panel de luz, linterna, luz de aro, lámpara"],["X","Iluminación RTX"],["L · N","Luces RGB · sonido"],["H · M","Ayuda · menú"]];
+const requisitos=[["Sistema","Windows 10/11, macOS 12+ o Linux de 64 bits"],["Processing","4.x con Video Library for Processing 4"],["Video","OpenGL 3.2 (para RTX); con menos usa la iluminación clásica"],["Memoria","4 GB de RAM"],["Pantalla","1280 × 720 o más"],["Opcional","Cámara web y bocinas"]];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+document.getElementById('controles').innerHTML=controles.map(([k,v])=>`<tr><td><kbd>${esc(k)}</kbd></td><td>${esc(v)}</td></tr>`).join('');
+document.getElementById('requisitos').innerHTML=requisitos.map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('');
+const fotos=[["c01_menu","Menú: elige entre 4 laptops y 4 PCs"],["c02_laptop_tornillo","Destornillador sobre un tornillo de la tapa"],["c03_laptop_interior","Interior de la laptop: la RAM lista para retirarse"],["c04_laptop_desarmada","Todas las piezas acomodadas en el tapete"],["c06_pc_interior","PC sin panel lateral: tarjeta gráfica seleccionada"],["c07_panel_iluminacion","Panel de iluminación con domo, ambientes y RTX"],["c10_sistema","SimOS mostrando la cámara en el monitor"],["c12_clasica","La misma escena con la iluminación clásica"],["c13_noche_linterna","Ambiente de noche con linterna y LEDs RGB"]];
+const gal=document.getElementById('gal');
+gal.innerHTML=fotos.map(([f,t])=>`<figure><img loading="lazy" src="img/${f}.jpg" alt="${esc(t)}" width="1280" height="720"><figcaption>${esc(t)}</figcaption></figure>`).join('');
+const mover=d=>gal.scrollBy({left:d*gal.clientWidth*0.8,behavior:'smooth'});
+document.getElementById('ant').onclick=()=>mover(-1);document.getElementById('sig').onclick=()=>mover(1);
+gal.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')mover(-1);if(e.key==='ArrowRight')mover(1)});
+// QR de la dirección actual (sin el nombre del archivo ni #)
+const dir=location.href.split('#')[0].replace(/index\.html$/,'');
+document.getElementById('dir').textContent=dir;
+const aviso=document.getElementById('avisoQR');
+if(location.protocol==='file:')aviso.textContent='Abriste el archivo directo del disco: el QR no funcionará en otros dispositivos. Usa el servidor local o súbelo a internet.';
+else if(/^(localhost|127\.)/.test(location.hostname))aviso.textContent='Estás en localhost: abre la página con la IP de tu computadora (por ejemplo http://192.168.1.20:8000) para que el QR sirva en celulares.';
+try{
+  const q=new QRCode(-1,QRErrorCorrectLevel.M);q.addData(dir);q.make();
+  const n=q.getModuleCount(),cv=document.getElementById('qr'),b=4,s=Math.floor(cv.width/(n+2*b)),g=cv.getContext('2d'),o=Math.floor((cv.width-s*(n+2*b))/2);
+  g.fillStyle='#fff';g.fillRect(0,0,cv.width,cv.height);g.fillStyle='#000';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))g.fillRect(o+(c+b)*s,o+(r+b)*s,s,s);
+  const big=document.createElement('canvas'),k=12;big.width=big.height=(n+2*b)*k;const h=big.getContext('2d');
+  h.fillStyle='#fff';h.fillRect(0,0,big.width,big.height);h.fillStyle='#000';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))h.fillRect((c+b)*k,(r+b)*k,k,k);
+  document.getElementById('bajarQR').href=big.toDataURL('image/png');
+}catch(e){aviso.textContent='No se pudo generar el QR: '+e.message}
+}
+</script>
+</body>
+</html>
